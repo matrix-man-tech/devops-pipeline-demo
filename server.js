@@ -30,6 +30,33 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+app.get('/status', (req, res) => {
+  const uptimeSeconds = Math.floor((Date.now() - startTime) / 1000);
+  const memoryUsage = process.memoryUsage();
+
+  res.json({
+    status: 'healthy',
+    version: '1.0.0',
+    uptime: {
+      seconds: uptimeSeconds,
+      human: new Date(uptimeSeconds * 1000).toISOString().substring(11, 19), // HH:MM:SS
+    },
+    memory: {
+      heapUsed: `${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB`,
+      heapTotal: `${(memoryUsage.heapTotal / 1024 / 1024).toFixed(2)} MB`,
+      rss: `${(memoryUsage.rss / 1024 / 1024).toFixed(2)} MB`,
+    },
+    requests: {
+      total: requestCount,
+      errors: errorCount,
+      successRate:
+        requestCount === 0
+          ? '100%'
+          : `${(((requestCount - errorCount) / requestCount) * 100).toFixed(1)}%`,
+    },
+  });
+});
+
 // Prometheus scrapes this endpoint every 15 seconds
 app.get('/metrics', (req, res) => {
   const uptimeSeconds = Math.floor((Date.now() - startTime) / 1000);
